@@ -33,6 +33,28 @@ describe('json-schema-agent', function(){
         assert(corr);
         assert(corr.schema.$('#/properties/email'));
         assert.deepEqual(corr.instance, fixtures.instances.simple);
+        assert('http://example.com/contacts/123' == corr.rel('self').get('href'));
+      })
+    })
+
+    it('should fetch correlation from string link (href)', function(){ 
+      setupClient(['simple','contentType'],['contact','contact']);
+      var agent = new Agent();
+      agent.fetch( fixtures.links.instances.string, function(err,corr){
+        assert(!err);
+        assert(corr.schema.$('#/properties/email'));
+        assert.deepEqual(corr.instance, fixtures.instances.simple);
+      })
+    })
+
+    it('should fetch correlation from relative link href', function(){ 
+      setupClient(['simple','contentType'],['contact','contact']);
+      var agent = new Agent();
+      agent.base('http://example.com');
+      agent.fetch( fixtures.links.instances.relative, function(err,corr){
+        assert(!err);
+        assert(corr.schema.$('#/properties/email'));
+        assert.deepEqual(corr.instance, fixtures.instances.simple);
       })
     })
 
@@ -60,6 +82,7 @@ DummyClient.prototype.get = function(href,params,fn){
     , res = responses && responses.shift()
   if (!res){ 
     var err = new Error('No expected call to ' + href)
+    console.log(err.toString());
     fn(err); return;
   }
   fn(res[0],res[1]);
