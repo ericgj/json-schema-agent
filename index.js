@@ -1,4 +1,7 @@
+'use strict';
+
 var core = require('json-schema-core')
+  , hyper = require('json-schema-hyper')
   , uri = require('./uri')
   , canonicalURI = uri.canonicalURI
   , baseURI = uri.baseURI
@@ -7,6 +10,7 @@ var core = require('json-schema-core')
 var Correlation = core.Correlation
   , Schema = core.Schema
   , Document = core.Document
+
 
 module.exports = Agent;
 
@@ -40,7 +44,7 @@ Agent.prototype.base = function(base){
 Agent.prototype.fetch = function( link, params, fn ){
   // parameter normalization
   if (arguments.length == 2){
-    fn = params; params = undefined;
+    fn = params; params = {};
   }
   if ("string" == typeof link) link = {href: link};
   
@@ -64,9 +68,10 @@ Agent.prototype.fetch = function( link, params, fn ){
   // todo set request body parser?
   
   // send request, wrapping response
-  request.get(baseuri, function(err,res){ 
+  var self = this;
+  request.get(baseuri, params, function(err,res){ 
     if (err){ fn(err); return; }  
-    wrapFetch.call(this, link.targetSchema,res,fn); 
+    wrapFetch.call(self, link.targetSchema,res,fn); 
   });
   
 }
@@ -75,7 +80,7 @@ Agent.prototype.fetch = function( link, params, fn ){
 
 function wrapFetch(targetSchema,res,fn){
   var agent = this;
-  var schemaUri = parseSchemaURI(res);
+  var schemaUri = getSchemaURI(res);
   if (!schemaUri){
     var corr = new Correlation(undefined,res.body);
     fn(undefined,corr); return;
@@ -84,32 +89,34 @@ function wrapFetch(targetSchema,res,fn){
   schemaUri = canonicalURI(agent.base(),schemaUri);
   var baseSchemaUri = baseURI(schemaUri)
     , fragment = fragmentURI(schemaUri)
-    , baseDoc = agent.cache.get(baseSchemaUri)
+    , baseDoc = agent._cache.get(baseSchemaUri)
     , instance = res.body
   
   if (baseDoc){
     fn.apply(
-      buildCorrelate.call(agent,baseSchemaUri,fragment,baseDoc.root,instance,targetSchema);
+      undefined,
+      buildCorrelate(fragment,baseDoc.root,instance,targetSchema)
     );
     return;
   } else {
     // cache miss
-    this.fetch(schemaUri, function(schemaerr,schemacorr){
+    agent.fetch(schemaUri, function(schemaerr,schemacorr){
       if (schemaerr) {
         fn(schemaerr); return;  // not sure this is right
       }
       baseDoc = new Document().parse(schemacorr.instance);
       baseDoc.dereference();  // todo if/when this is async, the rest of this block has to be done as callback
-      this.cache.set(baseSchemaUri,baseDoc);
-      fn.apply(
-        buildCorrelate.call(agent,baseSchemaUri,fragment,baseDoc.root,instance,targetSchema);
+      agent._cache.set(baseSchemaUri,baseDoc);
+      fn.apply( 
+        undefined,
+        buildCorrelate(fragment,baseDoc.root,instance,targetSchema)
       );
       return;
     })
   }
 }
 
-function buildCorrelate(uri,fragment,schema,instance,targetSchema){
+function buildCorrelate(fragment,schema,instance,targetSchema){
   var corr = schema.bind(instance);
   if (targetSchema && targetSchema.validate){
     var check = targetSchema.validate(instance);
@@ -127,15 +134,59 @@ function buildCorrelate(uri,fragment,schema,instance,targetSchema){
 }
 
 
-// TODO
-
 function buildError(err,data){
-
+  data.message = err.message;
+  err.data = data;
+  return err;
 }
 
 
-function parseSchemaURI(res){
+function getSchemaURI(res){
+  return getContentTypeProfile(res) ||
+         getDescribedByLink(res);
+}
 
+function getContentTypeProfile(res){
+  if (res.profile) {
+    return res.profile;  // content-type params automatically set
+  } else {
+    // manual parse content-type params
+    var ct = res.header['content-type'] || res.header['Content-Type'];
+    return params(ct).profile;
+  }
+}
+
+function getDescribedByLink(res){
+  var link = res.header['link'] || res.header['Link'];
+  // TODO PITA parsing of Link header
 }
 
 
+// taken from visionmedia/superagent
+
+function params(str){
+  return reduce(str.split(/ *; */), function(obj,str){
+    var parts = str.split(/ *= */)
+      , key = parts.shift()
+      , val = parts.shift();
+
+    if (key && val) obj[key] = val;
+    return obj;
+  }, {});
+}
+
+// inlined from RedVentures/reduce
+
+function reduce(arr, fn, initial){  
+  var idx = 0;
+  var len = arr.length;
+  var curr = arguments.length == 3
+    ? initial
+    : arr[idx++];
+
+  while (idx < len) {
+    curr = fn.call(null, curr, arr[idx], ++idx, arr);
+  }
+  
+  return curr;
+};

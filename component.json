@@ -8,7 +8,9 @@
     "ericgj/json-schema-core": "*",
     "ericgj/json-schema-hyper": "*"
   },
-  "development": {},
+  "development": {
+    "timoxley/assert": "*"  
+  },
   "license": "MIT",
   "main": "index.js",
   "scripts": [
