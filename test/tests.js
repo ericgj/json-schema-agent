@@ -8,7 +8,7 @@ Agent.service(DummyClient);
 ///////////////////////////////////
 
 describe('json-schema-agent', function(){
-  describe('fetch', function(){
+  describe('get', function(){
     
     function setupClient(instancePair,schemaPair){
       DummyClient.reset();
@@ -22,10 +22,10 @@ describe('json-schema-agent', function(){
                         );
     }
 
-    it('should fetch correlation based on Content-Type header', function(){ 
+    it('should get correlation based on Content-Type header', function(){ 
       setupClient(['simple','contentType'],['contact','contact']);
       var agent = new Agent();
-      agent.fetch( fixtures.links.instances.simple, function(err,corr){
+      agent.get( fixtures.links.instances.simple, function(err,corr){
         console.log('cache: %o', agent._cache);
         console.log('error: %o', err);
         console.log('correlation: %o', corr);
@@ -37,21 +37,32 @@ describe('json-schema-agent', function(){
       })
     })
 
-    it('should fetch correlation from string link (href)', function(){ 
+    it('should get correlation from string link (href)', function(){ 
       setupClient(['simple','contentType'],['contact','contact']);
       var agent = new Agent();
-      agent.fetch( fixtures.links.instances.string, function(err,corr){
+      agent.get( fixtures.links.instances.string, function(err,corr){
         assert(!err);
         assert(corr.schema.$('#/properties/email'));
         assert.deepEqual(corr.instance, fixtures.instances.simple);
       })
     })
 
-    it('should fetch correlation from relative link href', function(){ 
+    it('should get correlation from relative link href', function(){ 
       setupClient(['simple','contentType'],['contact','contact']);
       var agent = new Agent();
       agent.base('http://example.com');
-      agent.fetch( fixtures.links.instances.relative, function(err,corr){
+      agent.get( fixtures.links.instances.relative, function(err,corr){
+        assert(!err);
+        assert(corr.schema.$('#/properties/email'));
+        assert.deepEqual(corr.instance, fixtures.instances.simple);
+      })
+    })
+
+    it('should get correlation with relative schema link in response', function(){ 
+      setupClient(['simple','relativeProfile'],['contact','contact']);
+      var agent = new Agent();
+      agent.base('http://example.com');
+      agent.get( fixtures.links.instances.relative, function(err,corr){
         assert(!err);
         assert(corr.schema.$('#/properties/email'));
         assert.deepEqual(corr.instance, fixtures.instances.simple);
@@ -78,6 +89,9 @@ DummyClient.reset();
 
 DummyClient.prototype.get = function(href,params,fn){
   console.log("GET " + href);
+  if ('function' == typeof params){
+    fn = params; params = undefined;
+  }
   var responses = DummyClient._expects[href]
     , res = responses && responses.shift()
   if (!res){ 
@@ -126,6 +140,7 @@ fixtures.links.instances.string = fixtures.links.instances.simple.href
 fixtures.links.instances.relative = { href: '/contacts/123' }
 
 fixtures.links.schemas.contact = { href: 'http://example.com/schemas/contact' }
+fixtures.links.schemas.relative = { href: '/schemas/contact' }
 
 fixtures.responses.instances.contentType = {
   header: {
@@ -135,6 +150,16 @@ fixtures.responses.instances.contentType = {
   status: 200,
   body: fixtures.instances.simple
 }
+
+fixtures.responses.instances.relativeProfile = {
+  header: {
+    "content-type": "application/vnd.contact+json; profile=" + fixtures.links.schemas.relative.href 
+  },
+  type: "application/vnd.contact+json",
+  status: 200,
+  body: fixtures.instances.simple
+}
+
 
 fixtures.responses.schemas.contact = {
   header: {
