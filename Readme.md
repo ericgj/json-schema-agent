@@ -117,4 +117,5 @@ link target is not currently implemented
 [core]: https://github.com/ericgj/json-schema-core
 [hyper]: https://github.com/ericgj/json-schema-hyper
 [valid]: https://github.com/ericgj/json-schema-valid
+[superagent]: https://github.com/visionmedia/superagent
 
