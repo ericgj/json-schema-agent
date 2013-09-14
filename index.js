@@ -3,7 +3,7 @@
 var core = require('json-schema-core')
   , hyper = require('json-schema-hyper')
   , uri = require('./uri')
-  , linkHeader = require('./linkheader')
+  , getLinkHeaderHref = require('./linkheader')
   , canonicalURI = uri.canonicalURI
   , baseURI = uri.baseURI
   , fragmentURI = uri.fragmentURI
@@ -215,7 +215,7 @@ function getContentTypeProfile(res){
 function getDescribedByLink(res){
   var raw = res.header['link'] || res.header['Link'];
   if (!raw) return;
-  return linkHeader.findHref(raw,'describedBy');
+  return getLinkHeaderHref(raw,'describedBy');
 }
 
 
