@@ -45,7 +45,7 @@
   // Configuration
  
   // set base uri for resolving relative URIs in links
-  Agent.base('http://example.com/api'); 
+  agent.base('http://example.com/api'); 
   
 
   // set underlying http client (class)
