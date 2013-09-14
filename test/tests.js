@@ -92,7 +92,7 @@ describe('json-schema-agent', function(){
       agent.get( fixtures.links.instances.string, function(err,corr){
         var link = corr.rel('self');
         agent.get(link, function(err2,corr2){
-          assert(!err);
+          assert(!err2);
           assert.deepEqual(corr.instance, corr2.instance);
         })
       })
