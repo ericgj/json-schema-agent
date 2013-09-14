@@ -69,6 +69,17 @@ describe('json-schema-agent', function(){
       })
     })
 
+    it('should get correlation based on Link rel=describedBy header', function(){ 
+      setupClient(['simple','link'],['contact','contact']);
+      var agent = new Agent();
+      agent.base('http://example.com');
+      agent.get( fixtures.links.instances.simple, function(err,corr){
+        assert(!err);
+        assert(corr.schema.$('#/properties/email'));
+        assert.deepEqual(corr.instance, fixtures.instances.simple);
+      })
+    })
+
   })
 })
 
@@ -145,6 +156,18 @@ fixtures.links.schemas.relative = { href: '/schemas/contact' }
 fixtures.responses.instances.contentType = {
   header: {
     "content-type": "application/vnd.contact+json; profile=" + fixtures.links.schemas.contact.href 
+  },
+  type: "application/vnd.contact+json",
+  status: 200,
+  body: fixtures.instances.simple
+}
+
+fixtures.responses.instances.link = {
+  header: {
+    "Link": '<http://something.com/else>;rel=alternate , ' + "\n\r  " + 
+            '<' + fixtures.links.schemas.contact.href + '> ; rel="describedBy",' + "\n\r  " +
+            '<http://example.com/contacts/124>; rel="next"',
+    "Content-Type": "application/vnd.contact+json"
   },
   type: "application/vnd.contact+json",
   status: 200,

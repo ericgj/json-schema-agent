@@ -3,6 +3,7 @@
 var core = require('json-schema-core')
   , hyper = require('json-schema-hyper')
   , uri = require('./uri')
+  , linkHeader = require('./linkheader')
   , canonicalURI = uri.canonicalURI
   , baseURI = uri.baseURI
   , fragmentURI = uri.fragmentURI
@@ -206,13 +207,15 @@ function getContentTypeProfile(res){
   } else {
     // manual parse content-type params
     var ct = res.header['content-type'] || res.header['Content-Type'];
-    return params(ct).profile;
+    if (ct) return params(ct).profile;
+    return undefined;
   }
 }
 
 function getDescribedByLink(res){
-  var link = res.header['link'] || res.header['Link'];
-  // TODO PITA parsing of Link header
+  var raw = res.header['link'] || res.header['Link'];
+  if (!raw) return;
+  return linkHeader.findHref(raw,'describedBy');
 }
 
 
