@@ -81,8 +81,8 @@
   of [superagent's][superagent]. So superagent is the easiest choice, but not
   the only one.
 
-- The Correlate object is implemented in [json-schema-core][core], and extended
-in [json-schema-hyper][hyper], qq.v. for more examples of usage.
+- The Correlation object is implemented in [json-schema-core][core], and 
+extended in [json-schema-hyper][hyper], qq.v. for more examples of usage.
 
 - Both Content-Type and Link header -style correlation methods are supported
 (see [Core, sec. 8][speccore8]). However, specification of the _root relation_ 
