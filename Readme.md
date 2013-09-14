@@ -27,7 +27,8 @@
     correlation.schema    // the schema
   })
 
-  // POST using link object
+
+  // POST using link attributes
 
   var link = { href: 'http://example.com/thing',
                rel: 'create',
@@ -42,6 +43,14 @@
   agent.follow(link, obj, fn);
 
 
+  // follow chain of links
+
+  agent.follow(link, function(err, correlation){
+    var nextItem = correlation.rel('next');  // find link rel="next" in the schema
+    agent.follow(nextItem, fn)
+  })
+
+  
   // Configuration
  
   // set base uri for resolving relative URIs in links

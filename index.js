@@ -70,7 +70,7 @@ Agent.prototype.del = function(link,fn){
 // follow link based on method property
 
 Agent.prototype.follow = function(link,obj,fn){
-  if ("string" == typeof link) link = {href: link};
+  link = linkAttributes(link);
   var meth = (link.method || 'GET').toLowerCase();
   if (meth == 'delete') meth = 'del';
   follow.call(this,meth,link,obj,fn);
@@ -85,8 +85,8 @@ function follow(meth,link,obj,fn){
   if ('function' == typeof obj){
     fn = obj; obj = undefined;
   }
-  if ("string" == typeof link) link = {href: link};
-
+  link = linkAttributes(link);
+ 
   // input schema validation
   var err = validate(link.schema,obj);
   if (err){ fn(err); return; }
@@ -165,6 +165,15 @@ function wrapCorrelate(targetSchema,res,fn){
 }
 
 // utils
+
+function linkAttributes(link){
+  if ("string" == typeof link){
+    return {href: link};
+  } else if (link.nodeType && link.nodeType == "Link"){
+    return link.attributes();
+  }
+  return link;
+}
 
 function validate(schema,obj){
   if (obj && schema && schema.validate){

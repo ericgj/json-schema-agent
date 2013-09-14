@@ -11,7 +11,6 @@ describe('json-schema-agent', function(){
   describe('get', function(){
     
     function setupClient(instancePair,schemaPair){
-      DummyClient.reset();
       DummyClient.expect( fixtures.links.instances[instancePair[0]].href, 
                           undefined,
                           fixtures.responses.instances[instancePair[1]]
@@ -21,6 +20,12 @@ describe('json-schema-agent', function(){
                           fixtures.responses.schemas[schemaPair[1]]
                         );
     }
+
+    function resetClient(){ DummyClient.reset(); }
+
+    beforeEach(function(){
+      resetClient();
+    })
 
     it('should get correlation based on Content-Type header', function(){ 
       setupClient(['simple','contentType'],['contact','contact']);
@@ -80,6 +85,19 @@ describe('json-schema-agent', function(){
       })
     })
 
+    it('should get correlation from Link node object', function(){ 
+      setupClient(['simple','contentType'],['contact','contact']);
+      setupClient(['simple','contentType'],['contact','contact']);
+      var agent = new Agent();
+      agent.get( fixtures.links.instances.string, function(err,corr){
+        var link = corr.rel('self');
+        agent.get(link, function(err2,corr2){
+          assert(!err);
+          assert.deepEqual(corr.instance, corr2.instance);
+        })
+      })
+    })
+
   })
 })
 
@@ -97,6 +115,7 @@ DummyClient.reset = function(){
 }
 DummyClient.reset();
 
+DummyClient.prototype.set = function(key,val){ } // eat it, no request header testing done here
 
 DummyClient.prototype.get = function(href,params,fn){
   console.log("GET " + href);
