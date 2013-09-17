@@ -143,7 +143,7 @@ function wrapCorrelate(targetSchema,res,fn){
   if (baseDoc){
     fn.apply(
       undefined,
-      buildCorrelate(fragment,baseDoc.root,instance,targetSchema)
+      buildCorrelate(fragment,baseDoc.root(),instance,targetSchema)
     );
     return;
   } else {
@@ -157,7 +157,7 @@ function wrapCorrelate(targetSchema,res,fn){
       agent._cache.set(baseSchemaUri,baseDoc);
       fn.apply( 
         undefined,
-        buildCorrelate(fragment,baseDoc.root,instance,targetSchema)
+        buildCorrelate(fragment,baseDoc.root(),instance,targetSchema)
       );
       return;
     })
