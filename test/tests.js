@@ -97,8 +97,34 @@ describe('json-schema-agent', function(){
         })
       })
     })
+  })
+
+  describe('get, multiple schemas', function(){
+
+    function setupClient(type, pair){
+      DummyClient.expect( fixtures.links[type][pair[0]].href, 
+                          undefined,
+                          fixtures.responses[type][pair[1]]
+                        );
+    }
+
+   
+    it('should get correlation from multiple schemas', function(){
+      setupClient('instances', ['multi','multi']);
+      setupClient('schemas', ['multi1','multi1']);
+      setupClient('schemas', ['multi2','multi2']);
+      setupClient('schemas', ['multi3','multi3']);
+      var agent = new Agent();
+      agent.get( fixtures.links.instances.multi, function(err,corr){
+        assert(!err);
+        console.log('correlation multi: %o', corr);
+        assert(corr.schema.$('#/allOf/0/properties/email'));
+        assert.deepEqual(corr.instance, fixtures.instances.simple);
+      })
+    })
 
   })
+
 })
 
 //
@@ -161,16 +187,43 @@ fixtures.schemas.contact = {
   ]
 }
 
+fixtures.schemas.multi1 = fixtures.schemas.contact;
+fixtures.schemas.multi2 = {
+  properties: {
+    next: {}
+  },
+  links: [
+    { rel: "next",
+      href: "http://example.com/contacts/{next}",
+    }
+  ]
+}
+fixtures.schemas.multi3 = {
+  properties: {
+    prev: {}
+  },
+  links: [
+    { rel: "prev",
+      href: "http://example.com/contacts/{prev}",
+    }
+  ]
+}
+
 fixtures.instances.simple = {
   id: 123, name: "Charlie Chaplin", email: "charlie@chaplin.com"
 }
 
+
 fixtures.links.instances.simple = { href: 'http://example.com/contacts/123' }
 fixtures.links.instances.string = fixtures.links.instances.simple.href
 fixtures.links.instances.relative = { href: '/contacts/123' }
+fixtures.links.instances.multi = fixtures.links.instances.simple
 
 fixtures.links.schemas.contact = { href: 'http://example.com/schemas/contact' }
 fixtures.links.schemas.relative = { href: '/schemas/contact' }
+fixtures.links.schemas.multi1 = fixtures.links.schemas.contact
+fixtures.links.schemas.multi2 = { href: 'http://example.com/schemas/contact-next' }
+fixtures.links.schemas.multi3 = { href: 'http://example.com/schemas/contact-prev' }
 
 fixtures.responses.instances.contentType = {
   header: {
@@ -202,6 +255,20 @@ fixtures.responses.instances.relativeProfile = {
   body: fixtures.instances.simple
 }
 
+fixtures.responses.instances.multi = {
+  header: {
+    "Link": '<http://something.com/else>;rel=alternate , ' + "\n\r  " + 
+            '<' + fixtures.links.schemas.multi1.href + '> ; rel="describedBy",' + "\n\r  " +
+            '<' + fixtures.links.schemas.multi2.href + '> ; rel="describedBy",' + "\n\r  " +
+            '<' + fixtures.links.schemas.multi3.href + '> ; rel="describedBy",' + "\n\r  " +
+            '<http://example.com/contacts/124>; rel="next"',
+    "Content-Type": "application/vnd.contact+json"
+  },
+  type: "application/vnd.contact+json",
+  status: 200,
+  body: fixtures.instances.simple
+}
+
 
 fixtures.responses.schemas.contact = {
   header: {
@@ -211,5 +278,27 @@ fixtures.responses.schemas.contact = {
   body: fixtures.schemas.contact
 }
 
+fixtures.responses.schemas.multi1 = {
+  header: {
+    "content-type": "application/schema+json"
+  },
+  status: 200,
+  body: fixtures.schemas.multi1
+}
 
+fixtures.responses.schemas.multi2 = {
+  header: {
+    "content-type": "application/schema+json"
+  },
+  status: 200,
+  body: fixtures.schemas.multi2
+}
+
+fixtures.responses.schemas.multi3 = {
+  header: {
+    "content-type": "application/schema+json"
+  },
+  status: 200,
+  body: fixtures.schemas.multi3
+}
 
