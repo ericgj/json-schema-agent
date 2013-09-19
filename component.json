@@ -2,7 +2,7 @@
   "name": "json-schema-agent",
   "repo": "ericgj/json-schema-agent",
   "description": "JSON Hyper-Schema HTTP client",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "keywords": [],
   "dependencies": {
     "ericgj/json-schema-core": "*",
