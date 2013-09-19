@@ -182,7 +182,7 @@ function wrapCorrelate(targetSchema,res,fn){
       if (!schemaUris.length){
         var union = schemas[0];  // typically one schema
         if (schemas.length > 1){
-          union = Schema.union.apply(Schema,schemas);
+          union = Schema.allOf.apply(Schema,schemas);
         }
         fn.apply(
           undefined,
