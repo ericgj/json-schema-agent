@@ -3,7 +3,7 @@
 var core = require('json-schema-core')
   , hyper = require('json-schema-hyper')
   , uri = require('./uri')
-  , getLinkHeaderHref = require('./linkheader')
+  , getLinkHeaderHrefs = require('./linkheader')
   , canonicalURI = uri.canonicalURI
   , baseURI = uri.baseURI
   , fragmentURI = uri.fragmentURI
@@ -126,43 +126,76 @@ function follow(meth,link,obj,fn){
  
 }
 
-function wrapCorrelate(targetSchema,res,fn){
-  var agent = this;
-  var schemaUri = getSchemaURI(res);
-  if (!schemaUri){
-    var corr = new Correlation(undefined,res.body);
-    fn(undefined,corr); return;
-  }
-  
-  schemaUri = canonicalURI(agent.base(),schemaUri);
-  var baseSchemaUri = baseURI(schemaUri)
-    , fragment = fragmentURI(schemaUri)
+Agent.prototype.getSchema = function(uri, fn){
+  var agent = this
+    , schemaUri = canonicalURI(this.base(),uri)
+    , baseSchemaUri = baseURI(schemaUri)
+    , fragment = fragmentURI(schemaUri) || '#'
     , baseDoc = agent._cache.get(baseSchemaUri)
-    , instance = res.body
-  
+    , err, schema
+
+  // cache hit
   if (baseDoc){
-    fn.apply(
-      undefined,
-      buildCorrelate(fragment,baseDoc.root(),instance,targetSchema)
-    );
-    return;
+    schema = baseDoc.$(fragment);
+    fn(err,schema);
+
+  // cache miss
   } else {
-    // cache miss
-    agent.get(schemaUri, function(schemaerr,schemacorr){
-      if (schemaerr) {
-        fn(schemaerr); return;  // not sure this is right
+    agent.get(schemaUri, function(err,corr){
+      if (err) {
+        fn(err); return;  // not sure this is right
       }
-      baseDoc = new Document().parse(schemacorr.instance);
+      baseDoc = new Document().parse(corr.instance);
       baseDoc.dereference();  // todo if/when this is async, the rest of this block has to be done as callback
       agent._cache.set(baseSchemaUri,baseDoc);
-      fn.apply( 
-        undefined,
-        buildCorrelate(fragment,baseDoc.root(),instance,targetSchema)
-      );
-      return;
-    })
+      schema = baseDoc.$(fragment)
+      fn(err,schema);
+    });
   }
 }
+
+function wrapCorrelate(targetSchema,res,fn){
+  var agent = this
+    , instance = res.body
+  var schemaUris = getSchemaURIs(res);
+
+  // no schemas specified, use blank
+
+  if (!schemaUris || schemaUris.length == 0){
+    var schema = new Schema()
+    fn.apply(
+      undefined,
+      buildCorrelate(schema,instance,targetSchema)
+    );
+    return;
+  }
+  
+  var schemas = [];
+
+  // load each schema specified and build union schema
+
+  while (schemaUris.length) {
+    var uri = schemaUris.shift()
+    agent.getSchema(uri, function(err,schema){
+      if (err){ return; }  // ignore if error getting one schema, not quite right
+      schemas.push(schema);
+      if (!schemaUris.length){
+        var union = schemas[0];  // typically one schema
+        if (schemas.length > 1){
+          union = Schema.union(schemas);
+        }
+        fn.apply(
+          undefined,
+          buildCorrelate(union,instance,targetSchema)
+        );
+      }
+    });
+  }
+}
+
+
+
+
 
 // utils
 
@@ -185,16 +218,11 @@ function validate(schema,obj){
   }
 }
 
-function buildCorrelate(fragment,schema,instance,targetSchema){
+function buildCorrelate(schema,instance,targetSchema){
   var corr = schema.bind(instance);
   var err = validate(targetSchema,instance);
   if (err) return [err,corr];
-
-  // todo wrap error if fragment not found
-  if (fragment) corr = corr.$(fragment);
-  
   return [undefined, corr];
-
 }
 
 
@@ -205,9 +233,10 @@ function buildError(err,data){
 }
 
 
-function getSchemaURI(res){
-  return getContentTypeProfile(res) ||
-         getDescribedByLink(res);
+function getSchemaURIs(res){
+  var profile = getContentTypeProfile(res) 
+  return profile ? [profile] 
+                 : getDescribedByLinks(res);
 }
 
 function getContentTypeProfile(res){
@@ -221,10 +250,10 @@ function getContentTypeProfile(res){
   }
 }
 
-function getDescribedByLink(res){
+function getDescribedByLinks(res){
   var raw = res.header['link'] || res.header['Link'];
-  if (!raw) return;
-  return getLinkHeaderHref(raw,'describedBy');
+  if (!raw) return [];
+  return getLinkHeaderHrefs(raw,'describedBy');
 }
 
 

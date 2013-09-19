@@ -9,6 +9,7 @@ var paramexp=/[^\(\)<>@,;:"\/\[\]\?={} \t]+=(([^\(\)<>@,;:"\/\[\]\?={} \t]+)|("[
 
 module.exports = function(value,rel){
    var matches = value.match(linkexp);
+   var ret = [];
    for (var i = 0; i < matches.length; i++)
    {
       var split = matches[i].split('>');
@@ -26,9 +27,9 @@ module.exports = function(value,rel){
       }
 
       if (link.rel && 
-          link.rel.toLowerCase() == rel.toLowerCase()) return link.href;
+          link.rel.toLowerCase() == rel.toLowerCase()) ret.push(link.href);
    }
-   return undefined;
+   return ret;
 }
 
 function unquote(value)
