@@ -2,11 +2,8 @@
 
 var core = require('json-schema-core')
   , hyper = require('json-schema-hyper')
-  , uri = require('./uri')
+  , Uri = require('json-schema-uri')
   , getLinkHeaderHrefs = require('./linkheader')
-  , canonicalURI = uri.canonicalURI
-  , baseURI = uri.baseURI
-  , fragmentURI = uri.fragmentURI
   
 var Correlation = core.Correlation
   , Schema = core.Schema
@@ -99,8 +96,8 @@ function follow(meth,link,obj,fn){
     fn(err); return;
   }
 
-  var uri     = canonicalURI(this.base(),link.href)
-    , baseuri = baseURI(uri)
+  var uri     = Uri(this.base()).canonical(link.href)
+    , baseuri = Uri(uri).base()
     , accept  = link.mediaType
     , encType = link.encType
 
@@ -128,9 +125,9 @@ function follow(meth,link,obj,fn){
 
 Agent.prototype.getSchema = function(uri, fn){
   var agent = this
-    , schemaUri = canonicalURI(this.base(),uri)
-    , baseSchemaUri = baseURI(schemaUri)
-    , fragment = fragmentURI(schemaUri) || '#'
+    , schemaUri = Uri(this.base()).canonical(uri)
+    , baseSchemaUri = Uri(schemaUri).base()
+    , fragment = Uri(schemaUri).fragment() || '#'
     , baseDoc = agent._cache.get(baseSchemaUri)
     , err, schema
 

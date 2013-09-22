@@ -6,7 +6,8 @@
   "keywords": [],
   "dependencies": {
     "ericgj/json-schema-core": "*",
-    "ericgj/json-schema-hyper": "*"
+    "ericgj/json-schema-hyper": "*",
+    "ericgj/json-schema-uri": "*"
   },
   "development": {
     "timoxley/assert": "*"  
@@ -15,7 +16,6 @@
   "main": "index.js",
   "scripts": [
     "index.js",
-    "uri.js",
     "linkheader.js"
   ]
 }
