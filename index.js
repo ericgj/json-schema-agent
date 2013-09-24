@@ -30,7 +30,7 @@ function Cache(){
   this._cache = {};
 }
 Cache.prototype.get = function(uri){ return this._cache[uri]; }
-Cache.prototype.set = function(uri,doc){ this._cache[uri] = doc; }
+Cache.prototype.set = function(uri,obj){ this._cache[uri] = obj; }
 
 
 
@@ -70,8 +70,39 @@ Agent.prototype.follow = function(link,obj,fn){
   link = linkAttributes(link);
   var meth = (link.method || 'GET').toLowerCase();
   if (meth == 'delete') meth = 'del';
-  follow.call(this,meth,link,obj,fn);
+
+  var agent = this
+  var wrap = function(err,res){
+    if (err){ fn(err); return; }
+    wrapCorrelate.call(agent, link.targetSchema,res,fn); 
+  }
+
+  follow.call(this,meth,link,obj,wrap);
 }
+
+Agent.prototype.getCache = function(uri, fn){
+  var agent = this
+    , schemaUri = Uri(this.base()).join(Uri(uri))
+    , base = schemaUri.base()
+    , fragment = schemaUri.fragment()
+    , cached = agent._cache.get(base)
+
+  // cache hit
+  if (cached){
+    fn(undefined,cached,fragment);
+
+  // cache miss
+  } else {
+    follow.call(agent, 'get', schemaUri, function(err,res,fragment){
+      if (err){ fn(err); return; }
+      var obj = res.body;
+      obj.id = obj.id || base;
+      agent._cache.set(base,obj);
+      fn(err,obj,fragment);
+    })
+  }
+}
+
 
 // private 
 
@@ -96,8 +127,9 @@ function follow(meth,link,obj,fn){
     fn(err); return;
   }
 
-  var uri     = Uri(this.base()).canonical(link.href)
-    , baseuri = Uri(uri).base()
+  var uri     = Uri(this.base()).join(Uri(link.href))
+    , baseuri = uri.base()
+    , fragment = uri.fragment()
     , accept  = link.mediaType
     , encType = link.encType
 
@@ -110,11 +142,10 @@ function follow(meth,link,obj,fn){
   if (encType) request.set('Content-Type', encType);
     
   var wrap = function(err,res){
-    if (err){ fn(err); return; }  
-    wrapCorrelate.call(agent, link.targetSchema,res,fn); 
+    fn(err,res,fragment);
   }
 
-  // send request, wrapping response
+  // send request
   if (obj){
     request[meth](baseuri, obj, wrap);
   } else {
@@ -123,33 +154,7 @@ function follow(meth,link,obj,fn){
  
 }
 
-Agent.prototype.getSchema = function(uri, fn){
-  var agent = this
-    , schemaUri = Uri(this.base()).canonical(uri)
-    , baseSchemaUri = Uri(schemaUri).base()
-    , fragment = Uri(schemaUri).fragment() || '#'
-    , baseDoc = agent._cache.get(baseSchemaUri)
-    , err, schema
-
-  // cache hit
-  if (baseDoc){
-    schema = baseDoc.$(fragment);
-    fn(err,schema);
-
-  // cache miss
-  } else {
-    agent.get(schemaUri, function(err,corr){
-      if (err) {
-        fn(err); return;  // not sure this is right
-      }
-      baseDoc = new Document().parse(corr.instance);
-      baseDoc.dereference();  // todo if/when this is async, the rest of this block has to be done as callback
-      agent._cache.set(baseSchemaUri,baseDoc);
-      schema = baseDoc.$(fragment)
-      fn(err,schema);
-    });
-  }
-}
+// private
 
 function wrapCorrelate(targetSchema,res,fn){
   var agent = this
@@ -157,41 +162,44 @@ function wrapCorrelate(targetSchema,res,fn){
   var schemaUris = getSchemaURIs(res);
 
   // no schemas specified, use blank
-
   if (!schemaUris || schemaUris.length == 0){
     var schema = new Schema()
     fn.apply(
       undefined,
       buildCorrelate(schema,instance,targetSchema)
     );
-    return;
-  }
   
-  var schemas = [];
-
-  // load each schema specified and build union schema
-
-  while (schemaUris.length) {
-    var uri = schemaUris.shift()
-    agent.getSchema(uri, function(err,schema){
-      if (err){ return; }  // ignore if error getting one schema, not quite right
-      schemas.push(schema);
-      if (!schemaUris.length){
-        var union = schemas[0];  // typically one schema
-        if (schemas.length > 1){
-          union = Schema.allOf.apply(Schema,schemas);
-        }
-        fn.apply(
-          undefined,
-          buildCorrelate(union,instance,targetSchema)
-        );
-      }
-    });
+  // load each raw schema specified and build union schema
+  } else {
+    correlateSchemas(schemaUris,instance,targetSchema,fn);
   }
 }
 
+function correlateSchemas(uris,instance,targetSchema,fn){
+  var agent = this
+    , raws = []
+  while (uris.length) {
+    var uri = uris.shift()
+    agent.getCache(uri, function(err,obj,fragment){
+      if (err){ return; }  // ignore if error getting one schema, not quite right
+      obj = getPath(obj,fragment) || {};   // get fragment path, id-based paths not supported
+      raws.push(obj);
 
+      if (uris.length == 0){
+        var union = raws[0];
+        if (raws.length > 1) union = { allOf: raws };
+        var doc = new Document(agent).parse(union);
+        doc.dereference( function(){
+          fn.apply(
+            undefined,
+            buildCorrelate(doc.root(),instance,targetSchema)
+          );
+        });
+      }
 
+    });
+  }
+}
 
 
 // utils
@@ -229,6 +237,10 @@ function buildError(err,data){
   return err;
 }
 
+// TODO
+function getPath(obj,path){
+  return obj;
+}
 
 function getSchemaURIs(res){
   var profile = getContentTypeProfile(res) 
