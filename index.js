@@ -72,14 +72,21 @@ Agent.prototype.follow = function(link,obj,fn){
   if (meth == 'delete') meth = 'del';
 
   var agent = this
-  var wrap = function(err,res){
-    if (err){ fn(err); return; }
-    wrapCorrelate.call(agent, link.targetSchema,res,fn); 
-  }
-
-  follow.call(this,meth,link,obj,wrap);
+  follow.call(this,meth,link,obj,fn);
 }
 
+
+/* 
+   Note public method, but rarely called from client code.  Yields a _raw_
+   schema object or fragment, from cache if present.  If a fragment URI is
+   specified, the object is dereferenced prior to yield. Otherwise, calling
+   context must dereference.
+   
+   Called by `follow` callback to fetch schemas for instance URIs 
+   (`wrapCorrelate`), however it itself is a wrapper around `follow` in 
+   relation to _schema_ URIs.
+
+*/
 Agent.prototype.getCache = function(uri, fn){
   var agent = this
     , schemaUri = Uri(this.base()).join(Uri(uri))
@@ -89,23 +96,36 @@ Agent.prototype.getCache = function(uri, fn){
 
   // cache hit
   if (cached){
-    fn(undefined,cached,fragment);
+    if (fragment) {
+      dereferenceSchema.call(agent,cached,fragment,fn);
+    } else {        
+      fn(undefined,cached);
+    }
 
   // cache miss
   } else {
-    follow.call(agent, 'get', schemaUri, function(err,res,fragment){
+    follow.call(agent, 'get', schemaUri, function(err,corr){
       if (err){ fn(err); return; }
-      var obj = res.body;
+      var obj = corr.instance;
       obj.id = obj.id || base;
       agent._cache.set(base,obj);
-      fn(err,obj,fragment);
+
+      if (fragment)
+        dereferenceSchema.call(agent,obj,fragment,fn);
+      } else {
+        fn(undefined,obj);
+      }
     })
   }
 }
 
-
 // private 
 
+/* 
+   Builds request from link, runs schema validation, and yields a _correlated 
+   instance_ (instance + schemas), first running targetSchema validation on it.
+   This is the JSON Hyper-Schema wrapper around the http request/response.
+*/
 function follow(meth,link,obj,fn){
   var agent = this;
    
@@ -142,7 +162,8 @@ function follow(meth,link,obj,fn){
   if (encType) request.set('Content-Type', encType);
     
   var wrap = function(err,res){
-    fn(err,res,fragment);
+    if (err){ fn(err); return; }
+    wrapCorrelate.call(agent,res,link.targetSchema,fn); 
   }
 
   // send request
@@ -154,16 +175,15 @@ function follow(meth,link,obj,fn){
  
 }
 
-// private
 
-function wrapCorrelate(targetSchema,res,fn){
+function wrapCorrelate(res,targetSchema,fn){
   var agent = this
     , instance = res.body
   var schemaUris = getSchemaURIs(res);
 
   // no schemas specified, use blank
   if (!schemaUris || schemaUris.length == 0){
-    var schema = new Schema()
+    var schema = new Schema().parse({});
     fn.apply(
       undefined,
       buildCorrelate(schema,instance,targetSchema)
@@ -178,27 +198,46 @@ function wrapCorrelate(targetSchema,res,fn){
 function correlateSchemas(uris,instance,targetSchema,fn){
   var agent = this
     , raws = []
+
+  var wrap = function(err,obj){
+    if (err){ fn(err); return; }
+    var schema = new Schema().parse(obj);
+    fn.apply(
+      undefined,
+      buildCorrelate(schema,instance,targetSchema)
+    );
+  }
+
   while (uris.length) {
     var uri = uris.shift()
-    agent.getCache(uri, function(err,obj,fragment){
+    
+    agent.getCache(uri, function(err,obj){
       if (err){ return; }  // ignore if error getting one schema, not quite right
-      obj = getPath(obj,fragment) || {};   // get fragment path, id-based paths not supported
       raws.push(obj);
 
+      // last schema, dereference and build correlation
       if (uris.length == 0){
         var union = raws[0];
         if (raws.length > 1) union = { allOf: raws };
-        var doc = new Document(agent).parse(union);
-        doc.dereference( function(){
-          fn.apply(
-            undefined,
-            buildCorrelate(doc.root(),instance,targetSchema)
-          );
-        });
+        dereferenceSchema.call(agent,union,wrap);
       }
 
     });
   }
+}
+
+function dereferenceSchema(obj,fragment,fn){
+  if (arguments.length == 2){
+    fn = fragment; fragment = undefined;
+  }
+  
+  var ref = Ref(this).parse(obj);
+
+  ref.dereference( function(err){
+    if (err){ fn(err); return; }
+    var target = fragment ? ref.$(fragment) : ref.obj;
+    fn(undefined,target);
+  });
 }
 
 
@@ -237,10 +276,6 @@ function buildError(err,data){
   return err;
 }
 
-// TODO
-function getPath(obj,path){
-  return obj;
-}
 
 function getSchemaURIs(res){
   var profile = getContentTypeProfile(res) 
