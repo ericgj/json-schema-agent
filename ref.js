@@ -59,9 +59,19 @@ Ref.prototype.getId   = function(id){
   return this.getPath(path);
 }
 
-// TODO
-Ref.prototype.getPath = function(path){
-
+Ref.prototype.getPath = function(path,obj){
+  var obj = obj || this.obj;
+  var segs = path.split('/')
+    , seg = segs.shift()
+    , path = segs.join('/')
+  if (0 == segs.length) return obj;
+  if ('#' == seg) return this.getPath(path,this.obj);  // from the top 
+  if (!has.call(obj,seg)) return; // or throw error ?
+  if (0 == path.length){
+    return obj[seg];
+  } else {
+    return this.getPath(path,obj[seg]);
+  }
 }
 
 Ref.prototype.dereference = function(fn){

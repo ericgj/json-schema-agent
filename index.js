@@ -110,7 +110,7 @@ Agent.prototype.getCache = function(uri, fn){
       obj.id = obj.id || base;
       agent._cache.set(base,obj);
 
-      if (fragment)
+      if (fragment) {
         dereferenceSchema.call(agent,obj,fragment,fn);
       } else {
         fn(undefined,obj);
@@ -191,7 +191,7 @@ function wrapCorrelate(res,targetSchema,fn){
   
   // load each raw schema specified and build union schema
   } else {
-    correlateSchemas(schemaUris,instance,targetSchema,fn);
+    correlateSchemas.call(agent,schemaUris,instance,targetSchema,fn);
   }
 }
 
@@ -235,7 +235,7 @@ function dereferenceSchema(obj,fragment,fn){
 
   ref.dereference( function(err){
     if (err){ fn(err); return; }
-    var target = fragment ? ref.$(fragment) : ref.obj;
+    var target = fragment ? ref.$(fragment) : ref.root();
     fn(undefined,target);
   });
 }
