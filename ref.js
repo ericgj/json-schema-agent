@@ -1,5 +1,6 @@
 var type = require('type')
   , each = require('each')
+  , Emitter = require('emitter')
   , Uri  = require('json-schema-uri')
   , has  = Object.hasOwnProperty
 
@@ -12,6 +13,8 @@ function Ref(agent){
   return this;
 }
 
+Ref.prototype = new Emitter();
+
 Ref.prototype.root = function(){
   return this.obj;
 }
@@ -20,6 +23,7 @@ Ref.prototype.parse = function(obj){
   this._referents = {}; this._referrers = {};
   this.obj = obj;
   traverse({'#': obj}, extract.bind(this));
+  return this;
 }
 
 Ref.prototype.addReferent = function(uri,path){
@@ -49,7 +53,9 @@ Ref.prototype.each = function(fn){
 
 Ref.prototype.$ =
 Ref.prototype.fragment = function(key){
-  return this.getId(key) || this.getPath(key.toString());
+  var ret = this.getId(key)
+  if (undefined === ret) ret = this.getPath(key.toString());
+  return ret;
 }
 
 // note id should be a canonical uri (object or string)
@@ -64,8 +70,8 @@ Ref.prototype.getPath = function(path,obj){
   var segs = path.split('/')
     , seg = segs.shift()
     , path = segs.join('/')
-  if (0 == segs.length) return obj;
   if ('#' == seg) return this.getPath(path,this.obj);  // from the top 
+  if (0 == seg.length && 0 == segs.length) return obj; 
   if (!has.call(obj,seg)) return; // or throw error ?
   if (0 == path.length){
     return obj[seg];
@@ -124,7 +130,7 @@ function setPath(path,ref){
   var parts = path.split('/')
     , key = parts.pop()
     , parent = this.getPath(parts.join('/'))
-  parent && parent[key] = ref;
+  if (parent) parent[key] = ref;
 }
 
 

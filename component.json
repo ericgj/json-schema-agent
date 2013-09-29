@@ -7,7 +7,10 @@
   "dependencies": {
     "ericgj/json-schema-core": "*",
     "ericgj/json-schema-hyper": "*",
-    "ericgj/json-schema-uri": "*"
+    "ericgj/json-schema-uri": "*",
+    "component/emitter": "*",
+    "component/each": "*",
+    "component/type": "*"
   },
   "development": {
     "timoxley/assert": "*"  

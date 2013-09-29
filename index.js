@@ -4,6 +4,7 @@ var core = require('json-schema-core')
   , hyper = require('json-schema-hyper')
   , Uri = require('json-schema-uri')
   , getLinkHeaderHrefs = require('./linkheader')
+  , Ref = require('./ref')
   
 var Correlation = core.Correlation
   , Schema = core.Schema
@@ -90,7 +91,7 @@ Agent.prototype.follow = function(link,obj,fn){
 Agent.prototype.getCache = function(uri, fn){
   var agent = this
     , schemaUri = Uri(this.base()).join(Uri(uri))
-    , base = schemaUri.base()
+    , base = schemaUri.base().toString()
     , fragment = schemaUri.fragment()
     , cached = agent._cache.get(base)
 
@@ -104,7 +105,7 @@ Agent.prototype.getCache = function(uri, fn){
 
   // cache miss
   } else {
-    follow.call(agent, 'get', schemaUri, function(err,corr){
+    follow.call(agent, 'get', base, function(err,corr){
       if (err){ fn(err); return; }
       var obj = corr.instance;
       obj.id = obj.id || base;
@@ -148,7 +149,7 @@ function follow(meth,link,obj,fn){
   }
 
   var uri     = Uri(this.base()).join(Uri(link.href))
-    , baseuri = uri.base()
+    , baseuri = uri.base().toString()
     , fragment = uri.fragment()
     , accept  = link.mediaType
     , encType = link.encType
