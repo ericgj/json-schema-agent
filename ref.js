@@ -200,7 +200,7 @@ function traverse(obj, ctx, fn){
     
     case 'object':
     if (obj.id){
-      ctx.scopes.push( ctx.uri.join(obj.id) );
+      ctx.scopes.push( ctx.uri.join(Uri(obj.id)) );
       ctx.uri = ctx.scopes[ctx.scopes.length-1];
     }
     for (var k in obj){
