@@ -51,20 +51,44 @@ Ref.prototype.each = function(fn){
   each(this._referrers, fn);
 }
 
+/*
+ * Find fragment given id-based or JSON-Pointer key
+ * Key is URI-canonicalized against root id (if present),
+ *   then path looked up in referents (id-based lookup).
+ * If not found, treat fragment part of URI as path (JSON-Pointer),
+ *   starting from the base part of URI looked up in referents.
+ *
+ */
 Ref.prototype.$ =
 Ref.prototype.fragment = function(key){
-  var ret = this.getId(key)
-  if (undefined === ret) ret = this.getPath(key.toString());
+  var root = this.root()
+  if (!root) return;
+  var uri = Uri(root.id || '').join(key)
+  var ret = this.getId(uri)
+  if (ret) return ret;
+  if (!uri.isFragment()){
+    root = this.getId(uri.base());
+  }
+  if (!root) return;
+  ret = this.getPath(uri.fragment(),root);
   return ret;
 }
 
-// note id should be a canonical uri (object or string)
+/*
+ * Find fragment from id
+ * Note id should be a canonical URI (object or string)
+ *
+ */
 Ref.prototype.getId   = function(id){
   var path = this.getReferent(id);
   if (!path) return;
   return this.getPath(path);
 }
 
+/*
+ * Find fragment given path (JSON pointer)
+ *
+ */
 Ref.prototype.getPath = function(path,obj){
   var obj = obj || this.obj;
   var segs = path.split('/')
@@ -130,7 +154,12 @@ function setPath(path,ref){
   var parts = path.split('/')
     , key = parts.pop()
     , parent = this.getPath(parts.join('/'))
-  if (parent) parent[key] = ref;
+  if (parent) {
+    var val = {}; parent[key] = val;
+    for (var k in ref){
+      if (k !== 'id') val[k] = ref[k];
+    }
+  }
 }
 
 

@@ -90,15 +90,15 @@ Agent.prototype.follow = function(link,obj,fn){
 */
 Agent.prototype.getCache = function(uri, fn){
   var agent = this
-    , schemaUri = Uri(this.base()).join(Uri(uri))
-    , base = schemaUri.base().toString()
+    , schemaUri = Uri(this.base()).join(uri)
+    , base = schemaUri.base()
     , fragment = schemaUri.fragment()
     , cached = agent._cache.get(base)
 
   // cache hit
   if (cached){
     if (fragment) {
-      dereferenceSchema.call(agent,cached,fragment,fn);
+      dereferenceSchema.call(agent,cached,schemaUri,fn);
     } else {        
       fn(undefined,cached);
     }
@@ -112,7 +112,7 @@ Agent.prototype.getCache = function(uri, fn){
       agent._cache.set(base,obj);
 
       if (fragment) {
-        dereferenceSchema.call(agent,obj,fragment,fn);
+        dereferenceSchema.call(agent,obj,schemaUri,fn);
       } else {
         fn(undefined,obj);
       }
@@ -148,8 +148,8 @@ function follow(meth,link,obj,fn){
     fn(err); return;
   }
 
-  var uri     = Uri(this.base()).join(Uri(link.href))
-    , baseuri = uri.base().toString()
+  var uri     = Uri(this.base()).join(link.href)
+    , baseuri = uri.base()
     , fragment = uri.fragment()
     , accept  = link.mediaType
     , encType = link.encType
