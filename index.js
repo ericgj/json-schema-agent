@@ -4,7 +4,7 @@ var core = require('json-schema-core')
   , hyper = require('json-schema-hyper')
   , Uri = require('json-schema-uri')
   , getLinkHeaderHrefs = require('./linkheader')
-  , Ref = require('./ref')
+  , deref = require('./deref')
   
 var Correlation = core.Correlation
   , Schema = core.Schema
@@ -93,15 +93,12 @@ Agent.prototype.getCache = function(uri, fn){
     , schemaUri = Uri(this.base()).join(uri)
     , base = schemaUri.base()
     , fragment = schemaUri.fragment()
-    , cached = agent._cache.get(base)
+    , schema = agent._cache.get(base)
 
   // cache hit
-  if (cached){
-    if (fragment) {
-      dereferenceSchema.call(agent,cached,schemaUri,fn);
-    } else {        
-      fn(undefined,cached);
-    }
+  if (schema){
+    if (fragment) schema = schema.$(fragment);
+    fn(undefined,schema);
 
   // cache miss
   } else {
@@ -109,13 +106,15 @@ Agent.prototype.getCache = function(uri, fn){
       if (err){ fn(err); return; }
       var obj = corr.instance;
       obj.id = obj.id || base;
-      agent._cache.set(base,obj);
 
-      if (fragment) {
-        dereferenceSchema.call(agent,obj,schemaUri,fn);
-      } else {
-        fn(undefined,obj);
-      }
+      schema = new Schema().parse(obj);
+      deref(agent,schema,function(err){
+        if (err){ fn(err); return; }
+        agent._cache.set(base,schema);
+        if (fragment) schema = schema.$(fragment);
+        fn(undefined,schema);
+      });
+
     })
   }
 }
@@ -190,7 +189,7 @@ function wrapCorrelate(res,targetSchema,fn){
       buildCorrelate(schema,instance,targetSchema)
     );
   
-  // load each raw schema specified and build union schema
+  // load each schema specified and build union schema
   } else {
     correlateSchemas.call(agent,schemaUris,instance,targetSchema,fn);
   }
@@ -198,49 +197,28 @@ function wrapCorrelate(res,targetSchema,fn){
 
 function correlateSchemas(uris,instance,targetSchema,fn){
   var agent = this
-    , raws = []
-
-  var wrap = function(err,obj){
-    if (err){ fn(err); return; }
-    var schema = new Schema().parse(obj);
-    fn.apply(
-      undefined,
-      buildCorrelate(schema,instance,targetSchema)
-    );
-  }
+    , schemas = []
 
   while (uris.length) {
     var uri = uris.shift()
     
-    agent.getCache(uri, function(err,obj){
+    agent.getCache(uri, function(err,schema){
       if (err){ return; }  // ignore if error getting one schema, not quite right
-      raws.push(obj);
+      schemas.push(schema);
 
-      // last schema, dereference and build correlation
+      // last schema, union and build correlation
       if (uris.length == 0){
-        var union = raws[0];
-        if (raws.length > 1) union = { allOf: raws };
-        dereferenceSchema.call(agent,union,wrap);
+        var union = schemas[0];
+        if (schemas.length > 1) union = Schema.union(schemas);
+        fn.apply(
+          undefined,
+          buildCorrelate(union,instance,targetSchema)
+        );
       }
 
     });
   }
 }
-
-function dereferenceSchema(obj,fragment,fn){
-  if (arguments.length == 2){
-    fn = fragment; fragment = undefined;
-  }
-  
-  var ref = Ref(this).parse(obj);
-
-  ref.dereference( function(err){
-    if (err){ fn(err); return; }
-    var target = fragment ? ref.$(fragment) : ref.root();
-    fn(undefined,target);
-  });
-}
-
 
 // utils
 

@@ -5,8 +5,8 @@
   "version": "0.0.10",
   "keywords": [],
   "dependencies": {
-    "ericgj/json-schema-core": "*",
-    "ericgj/json-schema-hyper": "*",
+    "ericgj/json-schema-core": "edge",
+    "ericgj/json-schema-hyper": "edge",
     "ericgj/json-schema-uri": "*",
     "component/emitter": "*",
     "component/each": "*",
@@ -20,6 +20,6 @@
   "scripts": [
     "index.js",
     "linkheader.js",
-    "ref.js"
+    "deref.js"
   ]
 }
