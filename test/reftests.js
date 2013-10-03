@@ -33,8 +33,8 @@ describe('json-schema-agent dereferencing', function(){
     it('should dereference back-references', function(done){
       var subj = this.subject
       deref( agent, subj, function(){
-        var act = subj.getPath('properties/back/type');
-        assert(act.get() == 'string');
+        var act = subj.getPath('properties/back');
+        assert(act.property('type') == 'string');
         act = subj.getPath('properties/self')
         assert(subj === act);
         done();
@@ -44,8 +44,8 @@ describe('json-schema-agent dereferencing', function(){
     it('should dereference forward-references', function(done){
       var subj = this.subject
       deref( agent, subj, function(){
-        var act = subj.getPath('definitions/forward/type')
-        assert(act.get() == 'string');
+        var act = subj.getPath('definitions/forward')
+        assert(act.property('type') == 'string');
         done();
       })
     })
@@ -78,7 +78,7 @@ describe('json-schema-agent dereferencing', function(){
           , act = schema.getPath('definitions/schema1');
         assert(exp); 
         assert(act);
-        assert('array' == act.get('type').get());
+        assert('array' == act.property('type'));
         done();
       });
     })
@@ -95,7 +95,7 @@ describe('json-schema-agent dereferencing', function(){
           , act = schema.getPath('definitions/schema2');
         assert(exp);
         assert(act);
-        assert('integer' == act.get('type').get());
+        assert('integer' == act.property('type'));
         done();
       });
     })

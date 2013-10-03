@@ -1,0 +1,23 @@
+<html>
+  <head>
+    <title>json-schema-agent functional tests</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <link rel="stylesheet" href="mocha.css" />
+    <style>
+      h1 {
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Note: run node test/server.js in separate process</h1>
+    <div id="mocha"></div>
+    <script src="../build/build.js"></script>
+    <script src="mocha.js"></script>
+    <script>mocha.setup('bdd')</script>
+    <script src="functional.js"></script>
+    <script>
+      mocha.run();
+    </script>
+  </body>
+</html>

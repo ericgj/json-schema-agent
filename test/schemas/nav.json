@@ -1,0 +1,11 @@
+
+{
+  "links": [
+    { "rel": "users",
+      "href": "{/users}"
+    },
+    { "rel": "groups",
+      "href": "{/groups}"
+    }
+  ]
+}

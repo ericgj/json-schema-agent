@@ -13,7 +13,8 @@
     "component/type": "*"
   },
   "development": {
-    "timoxley/assert": "*"  
+    "timoxley/assert": "*",
+    "visionmedia/superagent": "*"
   },
   "license": "MIT",
   "main": "index.js",

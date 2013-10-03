@@ -1,0 +1,49 @@
+
+{
+  "links": [
+    { "rel": "self",
+      "href": "users"
+    },
+    { "rel": "create",
+      "href": "users",
+      "method": "POST"
+    },
+    { "rel": "root",
+      "href": "#/users"
+    }
+  ],
+
+  "definitions": {
+    "user": {
+
+      "links": [
+        { "rel": "self",
+          "href": "users/{id}"
+        },
+        { "rel": "update",
+          "href": "users/{id}",
+          "method": "PUT"
+        },
+        { "rel": "delete",
+          "href": "users/{id}",
+          "method":"DELETE"
+        }
+      ],
+
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" }
+      }
+    }
+  },
+
+  "properties": {
+    "users": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/user"
+      }
+    }
+  }
+
+}
