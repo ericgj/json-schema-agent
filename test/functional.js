@@ -29,6 +29,7 @@ describe('json-schema-agent: functional tests', function(){
   it('should correlate user path, and follow link to user', function(done){
     var agent = new Agent();
     agent.get('/', function(err,nav){
+      assert(nav.rel('users'));
       agent.follow(nav.rel('users'), function(err2,users){
         console.log('correlation users path: %o', users);
         assert(!err2);
@@ -44,6 +45,21 @@ describe('json-schema-agent: functional tests', function(){
       })
     })
   })
+  
+  it('http error should be caught', function(done){
+    var agent = new Agent();
+    agent.get('/', function(err,nav){
+      agent.follow(nav.rel('users'), function(err2,users){
+        var user = users.getRoot().get('1');
+        agent.follow(user.rel('bad'), function(err3,u){
+          console.log('http error: %o', err3);
+          assert(err3);
+          done();
+        })
+      })
+    })
+  })
+
 
 
 })

@@ -20,6 +20,9 @@
         { "rel": "self",
           "href": "users/{id}"
         },
+        { "rel": "bad",
+          "href": "user/{id}"
+        },
         { "rel": "update",
           "href": "users/{id}",
           "method": "PUT"

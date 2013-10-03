@@ -163,6 +163,7 @@ function follow(meth,link,obj,fn){
     
   var wrap = function(err,res){
     if (err){ fn(err); return; }
+    if (res.error) { fn(res.error); return; }
     wrapCorrelate.call(agent,res,link.targetSchema,fn); 
   }
 
