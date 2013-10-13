@@ -1,6 +1,8 @@
 
 # json-schema-agent
 
+  **Please note this library is not ready for production use.**
+
   JSON Hyper-Schema HTTP REST client. Together with [json-schema-core][core] 
   and [json-schema-hyper][hyper], this library provides a basic mechanism for
   correlating instances with schema over HTTP. It also provides validation 
