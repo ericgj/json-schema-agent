@@ -78,10 +78,8 @@ Agent.prototype.follow = function(link,obj,fn){
 
 
 /* 
-   Note public method, but rarely called from client code.  Yields a _raw_
-   schema object or fragment, from cache if present.  If a fragment URI is
-   specified, the object is dereferenced prior to yield. Otherwise, calling
-   context must dereference.
+   Note public method, but rarely called from client code.  Yields a
+   schema object or fragment, from cache if present.
    
    Called by `follow` callback to fetch schemas for instance URIs 
    (`wrapCorrelate`), however it itself is a wrapper around `follow` in 
