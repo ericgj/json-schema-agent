@@ -64,9 +64,9 @@ Agent.prototype.del = function(link,fn){
   follow.call(this,'del',link,undefined,fn);
 }
 
-
-// follow link based on method property
-
+/*
+ * Follow link based on method property
+ */
 Agent.prototype.follow = function(link,obj,fn){
   link = linkAttributes(link);
   var meth = (link.method || 'GET').toLowerCase();
@@ -78,14 +78,13 @@ Agent.prototype.follow = function(link,obj,fn){
 
 
 /* 
-   Note public method, but rarely called from client code.  Yields a
-   schema object or fragment, from cache if present.
-   
-   Called by `follow` callback to fetch schemas for instance URIs 
-   (`wrapCorrelate`), however it itself is a wrapper around `follow` in 
-   relation to _schema_ URIs.
-
-*/
+ * Note public method, but rarely called from client code.  Yields a
+ * schema object or fragment, dereferenced, from cache if present.
+ * 
+ * Called by `follow` callback to fetch schemas for instance URIs 
+ * (`wrapCorrelate`), however it itself is a wrapper around `follow` in 
+ * relation to _schema_ URIs.
+ */
 Agent.prototype.getCache = function(uri, fn){
   var agent = this
     , schemaUri = Uri(this.base()).join(uri)
@@ -105,8 +104,7 @@ Agent.prototype.getCache = function(uri, fn){
       var obj = corr.instance;
       obj.id = obj.id || base;
 
-      schema = new Schema().parse(obj);
-      deref(agent,schema,function(err){
+      agent.dereference(obj,function(err,schema){
         if (err){ fn(err); return; }
         agent._cache.set(base,schema);
         if (fragment) schema = schema.$(fragment);
@@ -117,13 +115,23 @@ Agent.prototype.getCache = function(uri, fn){
   }
 }
 
+/*
+ * Dereference raw schema object, yielding built schema
+ */
+Agent.prototype.dereference = function(obj,fn){
+  var schema = new Schema().parse(obj);
+  deref(this,schema, function(err){
+    fn(err,schema);
+  });
+}
+
 // private 
 
 /* 
-   Builds request from link, runs schema validation, and yields a _correlated 
-   instance_ (instance + schemas), first running targetSchema validation on it.
-   This is the JSON Hyper-Schema wrapper around the http request/response.
-*/
+ * Builds request from link, runs schema validation, and yields a _correlated 
+ * instance_ (instance + schemas), first running targetSchema validation on it.
+ * This is the JSON Hyper-Schema wrapper around the http request/response.
+ */
 function follow(meth,link,obj,fn){
   var agent = this;
    
