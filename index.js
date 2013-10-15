@@ -85,6 +85,7 @@ Agent.prototype.follow = function(link,obj,fn){
  * (`wrapCorrelate`), however it itself is a wrapper around `follow` in 
  * relation to _schema_ URIs.
  */
+Agent.prototype.getSchema =
 Agent.prototype.getCache = function(uri, fn){
   var agent = this
     , schemaUri = Uri(this.base()).join(uri)

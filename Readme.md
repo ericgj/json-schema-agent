@@ -53,9 +53,26 @@
   })
 
   
+  // fetch and dereference schema from link
+  // note schema is cached to the agent
+  
+  agent.getSchema(link, function(err,schema){
+    schema    // the parsed, dereferenced schema
+  })
+
+  
+  // dereference raw schema object
+  
+  agent.dereference(data, function(err,schema){
+    schema    // the parsed, dereferenced schema
+  })
+
+
   // Configuration
  
-  // set base uri for resolving relative URIs in links
+  // set default base uri for resolving relative URIs in links
+  // in-browser, typically you'd want to set this to window.location.origin
+
   agent.base('http://example.com/api'); 
   
 
