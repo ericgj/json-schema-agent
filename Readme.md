@@ -7,7 +7,7 @@
   and [json-schema-hyper][hyper], this library provides a basic mechanism for
   correlating instances with schema over HTTP. It also provides validation 
   of request and response messages (`schema` and `targetSchema`), if 
-  [json-schema-valid][valid] is used (forthcoming). 
+  [json-schema-valid][valid] is used. 
   
   Refer to the JSON Schema [Core v4][speccore] and [Hyper-Schema][spechyper] 
   IETF Internet Draft specs for more info.
