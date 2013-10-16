@@ -1,6 +1,6 @@
 {
   "name": "json-schema-agent-component",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "description": "JSON Hyper-Schema HTTP client",
   "main": "index.js",
   "directories": {
