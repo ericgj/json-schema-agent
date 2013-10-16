@@ -15,7 +15,14 @@
 
 ## Installation
 
+component:
+
     $ component install ericgj/json-schema-agent
+
+npm:
+
+    $ npm install json-schema-agent-component
+
 
 ## Examples
 
