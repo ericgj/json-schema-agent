@@ -9,14 +9,17 @@ function Client(){ return Request; }
 
 Agent.service(Client);
 
+var ORIGIN = "http://localhost:3000"
+
 describe('json-schema-agent: functional tests', function(){
 
   beforeEach( function(done){
-    Client().post('/fixtures?type=default', function(){ done(); })
+    Client().post(ORIGIN + '/fixtures?type=default', function(){ done(); })
   })
 
   it('should correlate root path', function(done){
     var agent = new Agent();
+    if (!isBrowser) agent.base(ORIGIN);
     agent.get('/', function(err,corr){
       console.log('correlation root path: %o', corr);
       assert(!err);
@@ -30,6 +33,7 @@ describe('json-schema-agent: functional tests', function(){
 
   it('should correlate user path, and follow link to user', function(done){
     var agent = new Agent();
+    if (!isBrowser) agent.base(ORIGIN);
     agent.get('/', function(err,nav){
       assert(nav.rel('users'));
       agent.follow(nav.rel('users'), function(err2,users){
@@ -50,6 +54,7 @@ describe('json-schema-agent: functional tests', function(){
   
   it('http error should be caught', function(done){
     var agent = new Agent();
+    if (!isBrowser) agent.base(ORIGIN);
     agent.get('/', function(err,nav){
       agent.follow(nav.rel('users'), function(err2,users){
         var user = users.getRoot().get('1');

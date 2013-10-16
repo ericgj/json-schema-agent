@@ -1,5 +1,5 @@
 {
-  "name": "json-schema-agent",
+  "name": "json-schema-agent-component",
   "version": "0.0.15",
   "description": "JSON Hyper-Schema HTTP client",
   "main": "index.js",
@@ -19,7 +19,7 @@
     "is-browser": "https://github.com/forbeslindesay/is-browser/tarball/master"
   },
   "devDependencies": {
-    "superagent": "*",
+    "superagent": "https://github.com/visionmedia/superagent/tarball/master",
     "mocha": "*"
   },
   "repository": {
