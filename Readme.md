@@ -93,6 +93,32 @@ npm:
 ## API
 
    
+## Running tests
+
+### In browser:
+
+  1. Unit tests: 
+  
+  - browse to file:// `test/index.html`
+  - browse to file:// `test/refs.html`
+
+  2. Functional tests:
+
+    $ node test/server.js
+
+  And browse to `http://localhost:3000/functional.html`
+
+
+### In Node-land:
+
+  1. Unit tests:
+  
+    $ npm test
+
+  2. Functional tests:
+
+    $ node test/server.js &
+    $ mocha --ui bdd test/functional.js
 
 ## License
 

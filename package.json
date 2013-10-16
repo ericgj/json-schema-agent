@@ -7,7 +7,8 @@
     "test": "test"
   },
   "scripts": {
-    "test": "mocha --ui bdd test/tests.js test/reftests.js"
+    "test": "mocha --ui bdd test/tests.js test/reftests.js",
+    "test-server": "node test/server.js"
   },
   "dependencies": {
     "json-schema-core-component": "https://github.com/ericgj/json-schema-core/tarball/master",
