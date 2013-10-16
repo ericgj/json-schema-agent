@@ -1,7 +1,9 @@
+'use strict';
 
-var assert = require('timoxley-assert')
+var isBrowser = require('is-browser')
+  , assert = require('assert')
   , Request = require('superagent')
-  , Agent = require('json-schema-agent')
+  , Agent = isBrowser ? require('json-schema-agent') : require('json-schema-agent-component')
 
 function Client(){ return Request; }
 

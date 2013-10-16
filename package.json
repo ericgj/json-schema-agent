@@ -1,0 +1,31 @@
+{
+  "name": "json-schema-agent",
+  "version": "0.0.15",
+  "description": "JSON Hyper-Schema HTTP client",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha --ui bdd test/tests.js test/reftests.js"
+  },
+  "dependencies": {
+    "json-schema-core-component": "https://github.com/ericgj/json-schema-core/tarball/master",
+    "json-schema-hyper-component": "https://github.com/ericgj/json-schema-hyper/tarball/master",
+    "json-schema-uri-component": "https://github.com/ericgj/json-schema-uri/tarball/master",
+    "emitter-component": "https://github.com/component/emitter/tarball/master",  
+    "each-component": "https://github.com/component/each/tarball/master",  
+    "component-type": "https://github.com/component/type/tarball/master",
+    "is-browser": "https://github.com/forbeslindesay/is-browser/tarball/master"
+  },
+  "devDependencies": {
+    "superagent": "*",
+    "mocha": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ericgj/json-schema-agent.git"
+  },
+  "author": "Eric Gjertsen",
+  "license": "MIT"
+}

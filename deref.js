@@ -1,4 +1,7 @@
-var Emitter = require('emitter')
+'use strict';
+
+var isBrowser = require('is-browser')
+  , Emitter = isBrowser ? require('emitter') : require('emitter-component')
 
 module.exports = Deref;
 

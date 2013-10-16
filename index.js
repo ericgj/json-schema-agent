@@ -1,8 +1,9 @@
 'use strict';
 
-var core = require('json-schema-core')
-  , hyper = require('json-schema-hyper')
-  , Uri = require('json-schema-uri')
+var isBrowser = require('is-browser')
+  , core = isBrowser ? require('json-schema-core') : require('json-schema-core-component')
+  , hyper = isBrowser ? require('json-schema-hyper') : require('json-schema-hyper-component')
+  , Uri = isBrowser ? require('json-schema-uri') : require('json-schema-uri-component')
   , getLinkHeaderHrefs = require('./linkheader')
   , deref = require('./deref')
   

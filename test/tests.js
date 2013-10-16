@@ -1,7 +1,10 @@
-var assert = require('timoxley-assert')
-  , Agent = require('json-schema-agent')
+'use strict';
 
-fixtures = {};
+var isBrowser = require('is-browser')
+  , assert = require('assert')
+  , Agent = isBrowser ? require('json-schema-agent') : require('json-schema-agent-component')
+
+var fixtures = {};
 
 Agent.service(DummyClient);
 

@@ -1,10 +1,12 @@
-var assert = require('timoxley-assert')
-  , deref = require('json-schema-agent/deref')
-  , Agent = require('json-schema-agent')
-  , core = require('json-schema-core')
+'use strict';
+
+var isBrowser = require('is-browser')
+  , assert = require('assert')
+  , Agent = isBrowser ? require('json-schema-agent') : require('json-schema-agent-component')
+  , core = isBrowser ? require('json-schema-core') : require('json-schema-core-component') 
   , Schema = core.Schema
 
-fixtures = {};
+var fixtures = {};
 
 Agent.service(DummyClient);
 
@@ -17,14 +19,13 @@ describe('json-schema-agent dereferencing', function(){
   describe('dereference paths, local', function(){
 
     beforeEach(function(){
-      var obj = JSON.parse(JSON.stringify(fixtures.deref.local));
-      this.subject = new Schema().parse(obj)
+      this.subject = JSON.parse(JSON.stringify(fixtures.deref.local));
     })
 
     it('should run without error', function(done){ 
       var subj = this.subject
-      deref( agent, subj, function(err){
-        console.log("local: %o", subj);
+      agent.dereference(subj, function(err,schema){
+        console.log("local: %o", schema);
         assert(!err);
         done();
       })
@@ -32,19 +33,19 @@ describe('json-schema-agent dereferencing', function(){
 
     it('should dereference back-references', function(done){
       var subj = this.subject
-      deref( agent, subj, function(){
-        var act = subj.getPath('properties/back');
+      agent.dereference(subj, function(err,schema){
+        var act = schema.getPath('properties/back');
         assert(act.property('type') == 'string');
-        act = subj.getPath('properties/self')
-        assert(subj === act);
+        act = schema.getPath('properties/self')
+        assert(schema === act);
         done();
       })
     })
 
     it('should dereference forward-references', function(done){
       var subj = this.subject
-      deref( agent, subj, function(){
-        var act = subj.getPath('definitions/forward')
+      agent.dereference(subj, function(err,schema){
+        var act = schema.getPath('definitions/forward')
         assert(act.property('type') == 'string');
         done();
       })
@@ -69,9 +70,8 @@ describe('json-schema-agent dereferencing', function(){
     it('should dereference', function(done){
       setupClient([fixtures.links.remote.schema1, 
                    fixtures.responses.remote.schema1]);
-      var obj = JSON.parse(JSON.stringify(fixtures.deref.remote.one));
-      var schema = new Schema().parse(obj);
-      deref( agent, schema, function(err){
+      var subj = JSON.parse(JSON.stringify(fixtures.deref.remote.one));
+      agent.dereference(subj, function(err,schema){
         console.log('remote deref: %o', schema);
         assert(!err);
         var exp = fixtures.deref.remote.schema1
@@ -86,9 +86,8 @@ describe('json-schema-agent dereferencing', function(){
     it('should dereference given fragment URI', function(done){
       setupClient([fixtures.links.remote.fragment, 
                    fixtures.responses.remote.fragment]);
-      var obj = JSON.parse(JSON.stringify(fixtures.deref.remote.two));
-      var schema = new Schema().parse(obj);
-      deref( agent, schema, function(err){
+      var subj = JSON.parse(JSON.stringify(fixtures.deref.remote.two));
+      agent.dereference(subj, function(err,schema){
         console.log('remote deref fragment: %o', schema);
         assert(!err);
         var exp = fixtures.deref.remote.fragment.definitions.fragment

@@ -10,7 +10,8 @@
     "ericgj/json-schema-uri": "*",
     "component/emitter": "*",
     "component/each": "*",
-    "component/type": "*"
+    "component/type": "*",
+    "forbeslindesay/is-browser": "*"
   },
   "development": {
     "timoxley/assert": "*",

@@ -1,3 +1,4 @@
+'use strict';
 
 /* Adapted from 
    http://bill.burkecentral.com/2009/10/15/parsing-link-headers-with-javascript-and-java/
