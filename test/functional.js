@@ -67,6 +67,30 @@ describe('json-schema-agent: functional tests', function(){
     })
   })
 
+  it('should fetch and dereference schema with multiple reference levels', function(done){
+    var agent = new Agent();
+    if (!isBrowser) agent.base(ORIGIN);
+    agent.getSchema('/schemas/json-patch.json', function(err,schema){
+      console.log('schema: %o', schema);
+      assert(!err);
+      
+      // simple reference
+
+      var referrer = schema.$('#/items/allOf/0/properties/path')
+        , referred = schema.$('#/definitions/jsonPointer')
+      assert(referrer); assert(referred);
+      assert(referrer === referred);
+
+      // reference to schema array with references
+
+      var referrer = schema.$('#/items/allOf/1/oneOf/0')
+        , referred = schema.$('#/definitions/oneOperation/oneOf/0')
+      assert(referrer); assert(referred);
+      assert(referrer === referred);
+      
+      done();
+    })
+  })
 
 
 })
