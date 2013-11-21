@@ -15,6 +15,7 @@
   },
   "development": {
     "timoxley/assert": "*",
+    "ericgj/json-schema-valid": "*",
     "visionmedia/superagent": "*"
   },
   "license": "MIT",

@@ -240,14 +240,17 @@ function linkAttributes(link){
   return link;
 }
 
+// note returns error if not valid, undefined otherwise
 function validate(schema,obj){
-  if (obj && schema && schema.validate){
-    var check = schema.validate(obj);
-    if (!check.valid){
-      var err = buildError(new Error(), check);
-      return err;
-    }
-  }
+  if (obj === undefined || !schema) return;
+  var corr = schema.bind(obj)
+  if (!corr.validate) return;
+  var ret
+  corr.once('error', function(err){ 
+    ret = err; 
+  });
+  corr.validate();
+  return ret;
 }
 
 function buildCorrelate(schema,instance,targetSchema){
@@ -256,14 +259,6 @@ function buildCorrelate(schema,instance,targetSchema){
   if (err) return [err,corr];
   return [undefined, corr];
 }
-
-
-function buildError(err,data){
-  data.message = err.message;
-  err.data = data;
-  return err;
-}
-
 
 function getSchemaURIs(res){
   var profile = getContentTypeProfile(res) 

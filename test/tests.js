@@ -3,10 +3,15 @@
 var isBrowser = require('is-browser')
   , assert = require('assert')
   , Agent = isBrowser ? require('json-schema-agent') : require('json-schema-agent-component')
+  , core = isBrowser ? require('json-schema-core') : require('json-schema-core-component')
+  , valid = isBrowser ? require('json-schema-valid') : require('json-schema-valid-component')
+  , Schema = core.Schema
 
 var fixtures = {};
 
 Agent.service(DummyClient);
+
+Schema.use(valid);
 
 ///////////////////////////////////
 
@@ -30,7 +35,7 @@ describe('json-schema-agent', function(){
       resetClient();
     })
 
-    it('should get correlation based on Content-Type header', function(){ 
+    it('should get correlation based on Content-Type header', function(done){ 
       setupClient(['simple','contentType'],['contact','contact']);
       var agent = new Agent();
       agent.get( fixtures.links.instances.simple, function(err,corr){
@@ -42,20 +47,22 @@ describe('json-schema-agent', function(){
         assert(corr.schema.$('#/properties/email'));
         assert.deepEqual(corr.instance, fixtures.instances.simple);
         assert('http://example.com/contacts/123' == corr.rel('self').get('href'));
+        done();
       })
     })
 
-    it('should get correlation from string link (href)', function(){ 
+    it('should get correlation from string link (href)', function(done){ 
       setupClient(['simple','contentType'],['contact','contact']);
       var agent = new Agent();
       agent.get( fixtures.links.instances.string, function(err,corr){
         assert(!err);
         assert(corr.schema.$('#/properties/email'));
         assert.deepEqual(corr.instance, fixtures.instances.simple);
+        done();
       })
     })
 
-    it('should get correlation from relative link href', function(){ 
+    it('should get correlation from relative link href', function(done){ 
       setupClient(['simple','contentType'],['contact','contact']);
       var agent = new Agent();
       agent.base('http://example.com');
@@ -63,10 +70,11 @@ describe('json-schema-agent', function(){
         assert(!err);
         assert(corr.schema.$('#/properties/email'));
         assert.deepEqual(corr.instance, fixtures.instances.simple);
+        done();
       })
     })
 
-    it('should get correlation with relative schema link in response', function(){ 
+    it('should get correlation with relative schema link in response', function(done){ 
       setupClient(['simple','relativeProfile'],['contact','contact']);
       var agent = new Agent();
       agent.base('http://example.com');
@@ -74,10 +82,11 @@ describe('json-schema-agent', function(){
         assert(!err);
         assert(corr.schema.$('#/properties/email'));
         assert.deepEqual(corr.instance, fixtures.instances.simple);
+        done();
       })
     })
 
-    it('should get correlation based on Link rel=describedBy header', function(){ 
+    it('should get correlation based on Link rel=describedBy header', function(done){ 
       setupClient(['simple','link'],['contact','contact']);
       var agent = new Agent();
       agent.base('http://example.com');
@@ -85,10 +94,11 @@ describe('json-schema-agent', function(){
         assert(!err);
         assert(corr.schema.$('#/properties/email'));
         assert.deepEqual(corr.instance, fixtures.instances.simple);
+        done();
       })
     })
 
-    it('should get correlation from Link node object', function(){ 
+    it('should get correlation from Link node object', function(done){ 
       setupClient(['simple','contentType'],['contact','contact']);
       setupClient(['simple','contentType'],['contact','contact']);
       var agent = new Agent();
@@ -97,9 +107,11 @@ describe('json-schema-agent', function(){
         agent.get(link, function(err2,corr2){
           assert(!err2);
           assert.deepEqual(corr.instance, corr2.instance);
+          done();
         })
       })
     })
+
   })
 
   describe('get, multiple schemas', function(){
@@ -112,7 +124,7 @@ describe('json-schema-agent', function(){
     }
 
    
-    it('should get correlation from multiple schemas', function(){
+    it('should get correlation from multiple schemas', function(done){
       setupClient('instances', ['multi','multi']);
       setupClient('schemas', ['multi1','multi1']);
       setupClient('schemas', ['multi2','multi2']);
@@ -123,7 +135,24 @@ describe('json-schema-agent', function(){
         console.log('correlation multi: %o', corr);
         assert(corr.schema.$('#/allOf/0/properties/email'));
         assert.deepEqual(corr.instance, fixtures.instances.simple);
+        done();
       })
+    })
+
+  })
+
+  describe('schema validation', function(){
+
+    it('should yield error if schema invalid', function(done){
+      var agent = new Agent()
+        , schema = new Schema().parse( fixtures.schemas.schema )
+        , instance = fixtures.instances.noemail
+        , corr = schema.bind(instance)
+      agent.follow( corr.rel('create'), instance, function(err,_){
+        console.log('schema invalid error: %o', err);
+        assert(err);
+        done();
+      });
     })
 
   })
@@ -159,6 +188,10 @@ DummyClient.prototype.get = function(href,params,fn){
     fn(err); return;
   }
   fn(res[0],res[1]);
+}
+
+DummyClient.prototype.post = function(href,params,fn){
+  console.log("POST " + href);
 }
 
 
@@ -212,10 +245,28 @@ fixtures.schemas.multi3 = {
   ]
 }
 
+fixtures.schemas.schema = {
+  links: [
+    { rel: "create",
+      method: "POST",
+      href: 'http://example.com/contacts',
+      schema: {
+        type: "object",
+        required: ["name","email"]
+      }
+    }
+  ]
+}
+
+
+
 fixtures.instances.simple = {
   id: 123, name: "Charlie Chaplin", email: "charlie@chaplin.com"
 }
 
+fixtures.instances.noemail = {
+  id: 456, name: "Buster Keaton"
+}
 
 fixtures.links.instances.simple = { href: 'http://example.com/contacts/123' }
 fixtures.links.instances.string = fixtures.links.instances.simple.href

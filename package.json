@@ -20,6 +20,7 @@
     "is-browser": "https://github.com/forbeslindesay/is-browser/tarball/master"
   },
   "devDependencies": {
+    "json-schema-valid-component": "https://github.com/ericgj/json-schema-valid/tarball/master",
     "superagent": "https://github.com/visionmedia/superagent/tarball/master",
     "mocha": "*"
   },
