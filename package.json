@@ -1,13 +1,13 @@
 {
   "name": "json-schema-agent-component",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "description": "JSON Hyper-Schema HTTP client",
   "main": "index.js",
   "directories": {
     "test": "test"
   },
   "scripts": {
-    "test": "mocha --ui bdd test/tests.js test/reftests.js",
+    "test": "mocha --ui bdd test/tests.js && mocha --ui bdd test/reftests.js",
     "test-server": "node test/server.js"
   },
   "dependencies": {
