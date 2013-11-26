@@ -1,0 +1,6 @@
+{
+  "properties": {
+    "foo": { "$ref": "cyclical-ref-b.json#" }
+  }
+}
+

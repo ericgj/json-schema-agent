@@ -58,6 +58,30 @@ app.get('/users/:id', function(req,res){
   else { res.send(404) }
 })
 
+app.get('/missing-ref', function(req, res){
+  var data = {}
+  res.setHeader('Link', '</schemas/missing-ref.json>;rel="describedBy"');
+  res.send(data);
+})
+
+app.get('/missing-ref-external', function(req, res){
+  var data = {}
+  res.setHeader('Link', '</schemas/missing-ref-external.json>;rel="describedBy"');
+  res.send(data);
+})
+
+app.get('/cyclical-ref', function(req, res){
+  var data = {}
+  res.setHeader('Link', '</schemas/cyclical-ref-a.json>;rel="describedBy"');
+  res.send(data);
+})
+
+app.get('/missing-schema', function(req, res){
+  var data = {}
+  res.setHeader('Link', '</schemas/foo.json>;rel="describedBy",</schemas/users.json>;rel="describedBy"');
+  res.send(data);
+})
+
 // note static dirs handled AFTER routes above
 
 app.use(express.static(__dirname));

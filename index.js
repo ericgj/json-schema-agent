@@ -87,12 +87,14 @@ Agent.prototype.follow = function(link,obj,fn){
  * relation to _schema_ URIs.
  */
 Agent.prototype.getSchema =
-Agent.prototype.getCache = function(uri, fn){
+Agent.prototype.getCache = function(uri, fn, crumb){
   var agent = this
     , schemaUri = Uri(this.base()).join(uri)
     , base = schemaUri.base()
     , fragment = schemaUri.fragment()
     , schema = agent._cache.get(base)
+  
+  crumb = crumb || []; // processed uris
 
   // cache hit
   if (schema){
@@ -105,13 +107,15 @@ Agent.prototype.getCache = function(uri, fn){
       if (err){ fn(err); return; }
       var obj = corr.instance;
       obj.id = obj.id || base;
+      
+      crumb.push(obj.id);  // processed, but not yet dereferenced
 
       agent.dereference(obj,function(err,schema){
         if (err){ fn(err); return; }
         agent._cache.set(base,schema);
         if (fragment) schema = schema.$(fragment);
         fn(undefined,schema);
-      });
+      }, crumb);
 
     })
   }
@@ -120,11 +124,11 @@ Agent.prototype.getCache = function(uri, fn){
 /*
  * Dereference raw schema object, yielding built schema
  */
-Agent.prototype.dereference = function(obj,fn){
+Agent.prototype.dereference = function(obj,fn,crumb){
   var schema = new Schema().parse(obj);
   deref(this,schema, function(err){
     fn(err,schema);
-  });
+  }, crumb);
 }
 
 // private 
@@ -212,7 +216,7 @@ function correlateSchemas(uris,instance,targetSchema,fn){
     var uri = uris.shift()
     
     agent.getCache(uri, function(err,schema){
-      if (err){ return; }  // ignore if error getting one schema, not quite right
+      if (err){ fn(err); return; }  // note does not stop correlating next schema
       schemas.push(schema);
 
       // last schema, union and build correlation

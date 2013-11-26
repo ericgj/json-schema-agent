@@ -1,0 +1,6 @@
+{
+  "properties": {
+    "bar": {"$ref": "cyclical-ref-c.json#/definitions/bar"}
+  }
+}
+

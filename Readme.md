@@ -124,13 +124,7 @@ npm:
   $ mocha --ui bdd test/functional.js
   ```
 
-## License
-
-  MIT
-
-
-## Limitations
-
+## Notes
 
 - Note that an underlying HTTP client library must be specified, it is not
   built-in. The API for requests/responses is equivalent to a simple subset 
@@ -138,7 +132,23 @@ npm:
   the only one.
 
 - The Correlation object is implemented in [json-schema-core][core], and 
-extended in [json-schema-hyper][hyper], qq.v. for more examples of usage.
+  extended in [json-schema-hyper][hyper], qq.v. for more examples of usage.
+
+- During dereferencing, missing fragment and external URI references yield 
+  errors.
+
+- Missing schemas referenced (via HTTP headers) in instance data yield
+  errors. However, if there are multiple indicated schemas, any that are
+  not missing _will_ be correlated to the instance data, _in addition to_
+  yielding errors for the missing ones. (This behavior may change.)
+
+- Cyclical references (i.e., schema A references schema B which references 
+  schema C, which in turn references schema A), are detected and yield an
+  error.
+
+
+## Limitations
+
 
 - Both Content-Type and Link header -style correlation methods are supported
 (see [Core, sec. 8][speccore8]). However, specification of the _root relation_ 
@@ -161,6 +171,11 @@ the future.
 - Likewise, the determination of _authoritative_ representation of the `self`
 link target is not currently implemented 
 ([Hyper-Schema, sec. 5.2.2][spechyper5-2-2]), but may be in the future.
+
+
+## License
+
+  MIT
 
 
 [spechyper]: http://tools.ietf.org/html/draft-luff-json-hyper-schema-00

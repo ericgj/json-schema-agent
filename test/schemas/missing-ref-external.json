@@ -1,0 +1,7 @@
+{
+  "definitions": { },
+  "properties": {
+    "foo": {"$ref": "missing"}
+  }
+}
+

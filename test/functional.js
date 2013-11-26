@@ -92,5 +92,55 @@ describe('json-schema-agent: functional tests', function(){
     })
   })
 
+  it('should throw error when fragment reference doesnt exist in schema', function(done){
+    var agent = new Agent();
+    if (!isBrowser) agent.base(ORIGIN);
+    agent.get('/missing-ref', function(err,corr){
+      console.log('error fragment ref no exist: %o', err);
+      assert(err);
+      done();
+    });
+  })
+
+  it('should throw error when external schema reference not found', function(done){
+    var agent = new Agent();
+    if (!isBrowser) agent.base(ORIGIN);
+    agent.get('/missing-ref-external', function(err,corr){
+      console.log('error external ref no exist: %o', err);
+      assert(err);
+      done();
+    });
+  })
+
+  it('should throw error when cyclical schema reference found', function(done){
+    var agent = new Agent();
+    if (!isBrowser) agent.base(ORIGIN);
+    agent.get('/cyclical-ref', function(err,corr){
+      console.log('error cyclical ref: %o', err);
+      assert(err);
+      done();
+    });
+  })
+
+  // note I'm not sure about this behavior
+  // as it ends up firing the callback twice
+  
+  it('should throw error when schema missing, but continue correlating', function(done){
+    var agent = new Agent();
+    if (!isBrowser) agent.base(ORIGIN);
+    var count = 0, errcount = 0;
+    agent.get('/missing-schema', function(err,corr){
+      count++;
+      if (err) {
+        console.log('error missing schema: %o', err);
+        errcount++;
+      }
+      if (corr) {
+        console.log('correlation missing schema: %o', corr);
+      }
+      if (count == 2 && errcount == 1) done();
+    });
+  })
 
 })
+
